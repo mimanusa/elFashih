@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#065f46">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ELfashih">
+    <meta name="description" content="Aplikasi hafalan Al-Quran Juz 1 — Al-Fatihah & Al-Baqarah">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/static/pwa/apple-touch-icon.png">
+
+    <title>ELfashih - Hafalan Juz 1</title>
+    
+    <!-- quran-madina-html Web Component -->
+    <script type="text/javascript" src="https://unpkg.com/quran-madina-html" data-font="hafs"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        islamic: {
+                            dark: '#064e3b',
+                            primary: '#065f46',
+                            light: '#10b981',
+                            gold: '#fbbf24',
+                            bg: '#f8fafc'
+                        }
+                    },
+                    fontFamily: {
+                        quran: ['Amiri Quran', 'serif'],
+                        ui: ['Poppins', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --mf-content-w: min(92vw, 640px);
+            --mf-font-size: clamp(16px, calc(var(--mf-content-w) * 0.055), 30px);
+            --mf-line-height: 2.55;
+            --mf-pad-h: clamp(12px, calc(var(--mf-content-w) * 0.04), 32px);
+            --mf-pad-v: clamp(10px, calc(var(--mf-content-w) * 0.03), 24px);
+            --mf-border-thin:  clamp(1px,  calc(var(--mf-content-w) * 0.003), 3px);
+            --mf-border-mid:   clamp(2px,  calc(var(--mf-content-w) * 0.005), 5px);
+            --mf-border-thick: clamp(4px,  calc(var(--mf-content-w) * 0.012), 10px);
+            --mf-margin-sp:    clamp(6px,  calc(var(--mf-content-w) * 0.018), 14px);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: #f8fafc; }
+
+        .mushaf-book-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: clamp(1.2rem, 4vw, 2.5rem);
+            padding: clamp(0.8rem, 3vw, 2rem) clamp(0.5rem, 2vw, 1rem) 6rem;
+        }
+
+        .mushaf-page-card {
+            background: linear-gradient(160deg, #fffef5 0%, #fffdf0 60%, #fefce8 100%);
+            width: var(--mf-content-w);
+            position: relative;
+            border-radius: 3px;
+            box-shadow:
+                0 1px 2px  rgba(0,0,0,.07),
+                0 4px 8px  rgba(0,0,0,.05),
+                0 12px 28px rgba(0,0,0,.07),
+                inset 0 0 0 1px rgba(180,150,80,.18);
+        }
+
+        .mushaf-page-card.special-fatihah {
+            border: var(--mf-border-thin) solid #fbbf24;
+            border-radius: 2px;
+            box-shadow:
+                0 0 0 var(--mf-border-mid)   #065f46,
+                0 0 0 calc(var(--mf-border-mid) + var(--mf-border-thin)) #fbbf24,
+                0 0 0 calc(var(--mf-border-mid) + var(--mf-border-thin) + var(--mf-border-thick)) #064e3b,
+                0 16px 48px rgba(0,0,0,.18),
+                inset 0 0 0 1px rgba(180,150,80,.15);
+            margin: calc(var(--mf-border-mid) + var(--mf-border-thin) + var(--mf-border-thick) + 2px);
+        }
+
+        .mushaf-page-card.special-fatihah::before,
+        .mushaf-page-card.special-fatihah::after {
+            content: '❧';
+            position: absolute;
+            font-size: clamp(1rem, 4vw, 1.7rem);
+            color: #fbbf24;
+            z-index: 3;
+            line-height: 1;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .mushaf-page-card.special-fatihah::before { top: calc(-1 * clamp(1rem, 4vw, 1.7rem) - 4px); }
+        .mushaf-page-card.special-fatihah::after  { bottom: calc(-1 * clamp(1rem, 4vw, 1.7rem) - 4px); transform: translateX(-50%) rotate(180deg); }
+
+        .mushaf-page-card.special-baqarah {
+            border: var(--mf-border-mid) solid #065f46;
+            border-radius: 0;
+            box-shadow:
+                0 0 0 calc(var(--mf-border-mid) + 2px) #fffdf0,
+                0 0 0 calc(var(--mf-border-mid) * 2 + 2px) #065f46,
+                0 0 0 calc(var(--mf-border-mid) * 3 + 2px) #fbbf24,
+                0 16px 48px rgba(0,0,0,.14),
+                inset 0 0 0 1px rgba(180,150,80,.12);
+            margin: calc(var(--mf-border-mid) * 3 + 4px);
+        }
+        .mushaf-page-card.special-baqarah::before,
+        .mushaf-page-card.special-baqarah::after {
+            content: '◆';
+            position: absolute;
+            font-size: clamp(0.7rem, 2.5vw, 1.1rem);
+            color: #fbbf24;
+            z-index: 3;
+            background: #fffdf0;
+            padding: 0 clamp(4px, 1.5vw, 10px);
+            line-height: 1;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .mushaf-page-card.special-baqarah::before { top: calc(-1 * clamp(0.7rem, 2.5vw, 1.1rem) / 2 - 2px); }
+        .mushaf-page-card.special-baqarah::after  { bottom: calc(-1 * clamp(0.7rem, 2.5vw, 1.1rem) / 2 - 2px); }
+
+        .mushaf-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: clamp(6px, 2vw, 14px) var(--mf-pad-h) clamp(5px, 1.5vw, 10px);
+            border-bottom: 1px solid rgba(180,150,80,.22);
+            font-size: clamp(0.55rem, 1.8vw, 0.7rem);
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #6b7280;
+            font-weight: 600;
+        }
+        .mushaf-header span:nth-child(2) {
+            background: #065f46;
+            color: #fbbf24;
+            padding: clamp(1px, 0.5vw, 3px) clamp(6px, 2vw, 14px);
+            border-radius: 50px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .mushaf-footer {
+            padding: clamp(4px, 1.5vw, 8px) var(--mf-pad-h);
+            border-top: 1px solid rgba(180,150,80,.18);
+            text-align: center;
+            font-size: clamp(0.5rem, 1.5vw, 0.65rem);
+            color: #9ca3af;
+            font-family: 'Poppins', sans-serif;
+            letter-spacing: 0.04em;
+        }
+        .mushaf-body {
+            padding: var(--mf-pad-v) var(--mf-pad-h) calc(var(--mf-pad-v) * 1.3);
+            overflow: hidden;
+        }
+
+        quran-madina-html {
+            --qmh-background: transparent;
+            --qmh-header: #065f46;
+            display: block !important;
+            width: 100% !important;
+            direction: rtl;
+        }
+        quran-madina-html-line {
+            display: block;
+            font-size: var(--mf-font-size) !important;
+            line-height: var(--mf-line-height);
+            font-family: 'Amiri Quran', serif;
+            direction: rtl;
+            text-align: justify;
+            text-align-last: justify;
+            white-space: nowrap;
+            transform-origin: right top;
+            margin: 0;
+            padding: 0;
+        }
+        .quran-madina-html-part {
+            cursor: pointer;
+            border-radius: 3px;
+            transition: background-color 0.12s;
+            padding: 0 1px;
+        }
+        .quran-madina-html-part:hover { background-color: #dbeafe !important; color: #1d4ed8; }
+        .quran-madina-html-part.char-active {
+            background-color: #fef08a !important;
+            color: #000 !important;
+            box-shadow: 0 0 6px rgba(251,191,36,0.55);
+        }
+        quran-madina-html-line:has(.quran-madina-html-sura-start) {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 56"><rect x="2" y="2" width="396" height="52" rx="6" fill="none" stroke="%23065f46" stroke-width="1.8"/><line x1="18" y1="28" x2="90" y2="28" stroke="%23fbbf24" stroke-width="1.5"/><line x1="310" y1="28" x2="382" y2="28" stroke="%23fbbf24" stroke-width="1.5"/></svg>') !important;
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            text-align: center !important;
+            text-align-last: center !important;
+            white-space: normal !important;
+            font-size: calc(var(--mf-font-size) * 0.82) !important;
+            margin: calc(var(--mf-pad-v) * 0.4) 0;
+        }
+        .mushaf-page-card.special-fatihah quran-madina-html-line,
+        .mushaf-page-card.special-baqarah quran-madina-html-line {
+            text-align: center !important;
+            text-align-last: center !important;
+            white-space: normal !important;
+        }
+
+        .digital-ayah-card {
+            background: white;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+            padding: clamp(1rem, 3vw, 1.5rem);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .digital-ayah-card:hover { border-color: #10b981; box-shadow: 0 4px 12px rgba(6,95,70,.08); }
+        .digital-ayah-card.card-active {
+            border-color: #065f46 !important;
+            box-shadow: 0 0 0 3px rgba(6,95,70,0.12), 0 4px 16px rgba(6,95,70,0.12) !important;
+            background: #f0fdf4 !important;
+        }
+        .digital-ayah-text {
+            font-family: 'Amiri Quran', serif;
+            font-size: clamp(1.3rem, 5vw, 2rem);
+            line-height: 2.4;
+            direction: rtl;
+            text-align: right;
+            color: #1f2937;
+        }
+        .digital-word {
+            cursor: pointer;
+            padding: 1px 3px;
+            border-radius: 4px;
+            transition: all 0.12s;
+            display: inline;
+        }
+        .digital-word:hover { background: #dbeafe; color: #1d4ed8; }
+        .digital-word.char-active {
+            background: #fef08a !important;
+            color: #000 !important;
+            box-shadow: 0 0 8px rgba(251,191,36,0.5);
+        }
+        .ayah-marker {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: clamp(28px, 7vw, 40px);
+            height: clamp(28px, 7vw, 40px);
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50"><path fill="%23fbbf24" d="M25 2L31 18H48L35 28L40 45L25 35L10 45L15 28L2 18H19L25 2Z"/></svg>') no-repeat center;
+            background-size: contain;
+            font-size: clamp(0.7rem, 2.5vw, 0.95rem);
+            color: #064e3b;
+            font-weight: bold;
+            font-family: 'Poppins', sans-serif;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+
+        .blind-mode .digital-word:not(.char-active) {
+            color: transparent !important;
+            text-shadow: 0 0 16px rgba(6,78,59,0.5);
+            user-select: none;
+        }
+        .blind-mode quran-madina-html-line .quran-madina-html-part:not(.char-active) {
+            color: transparent !important;
+            text-shadow: 0 0 14px rgba(6,78,59,0.5);
+        }
+
+        @keyframes flashRed { 0%,100%{background-color:transparent}50%{background-color:#fee2e2} }
+        .tasmi-error { animation: flashRed 0.4s linear 3; }
+
+        .loader {
+            width: 40px; height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #fbbf24;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .page-indicator {
+            position: fixed;
+            bottom: 72px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(6,78,59,0.92);
+            color: #fbbf24;
+            padding: 5px 18px;
+            border-radius: 50px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
+            z-index: 30;
+            backdrop-filter: blur(8px);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.35s;
+            white-space: nowrap;
+        }
+        .page-indicator.visible { opacity: 1; }
+
+        /* PWA Install Banner */
+        #installBanner {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #064e3b;
+            color: white;
+            padding: 12px 16px;
+            z-index: 50;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            box-shadow: 0 -4px 16px rgba(0,0,0,0.25);
+            border-top: 1px solid rgba(16,185,129,0.3);
+        }
+        #installBanner.visible { display: flex; }
+
+        @media (max-width: 480px) {
+            .btn-label-long { display: none; }
+            .toolbar-inner {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .toolbar-inner > * { justify-content: center; }
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(16,185,129,0.4); border-radius: 10px; }
+
+        /* Toast */
+        .toast {
+            position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+            background: #064e3b; color: #fbbf24; padding: 8px 20px;
+            border-radius: 50px; font-size: 0.75rem; font-weight: 700;
+            font-family: 'Poppins', sans-serif; z-index: 100;
+            opacity: 0; transition: opacity 0.25s; pointer-events: none;
+            white-space: nowrap;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- NAVBAR -->
+    <header class="bg-[#065f46] text-white shadow-xl z-20 flex-shrink-0">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="bg-white p-2 rounded-full shadow-inner">
+                    <i class="fa-solid fa-quran text-[#065f46] text-lg"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight">EL<span class="text-[#fbbf24]">fashih</span></h1>
+                <span class="hidden md:inline text-xs bg-[#064e3b] px-3 py-1 rounded-full border border-[#10b981] text-gray-300">
+                    Juz 1 · Al-Fatihah – Al-Baqarah
+                </span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="bg-[#064e3b] p-1 rounded-xl flex shadow-inner border border-[#10b981]/30">
+                    <button id="viewDigitalBtn" 
+                        class="px-4 py-1.5 rounded-lg text-gray-400 text-sm font-semibold transition"
+                        onclick="setViewMode('digital')">Digital</button>
+                    <button id="viewMushafBtn" 
+                        class="px-4 py-1.5 rounded-lg bg-[#065f46] text-white text-sm font-semibold transition shadow"
+                        onclick="setViewMode('mushaf')">Mushaf</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- TOOLBAR -->
+    <div class="bg-white border-b border-gray-200 z-10 flex-shrink-0 shadow-sm">
+        <div class="max-w-4xl mx-auto px-3 py-2.5 toolbar-inner flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5">
+                <button id="playAllBtn" 
+                    class="flex items-center gap-1.5 bg-[#065f46] hover:bg-[#064e3b] text-white px-4 py-2 rounded-full shadow-md transition-all font-bold text-xs"
+                    onclick="togglePlayAll()">
+                    <i class="fa-solid fa-play"></i>
+                    <span class="btn-label-long">PUTAR SEMUA</span>
+                </button>
+                <button class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-400 hover:bg-gray-50 transition text-xs"
+                    onclick="stopAudio()">
+                    <i class="fa-solid fa-stop"></i>
+                </button>
+                <!-- Tombol Loop -->
+                <button id="loopBtn"
+                    class="flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-500 px-3 py-2 rounded-full text-xs font-semibold transition"
+                    onclick="openLoopModal()">
+                    <i class="fa-solid fa-repeat"></i>
+                    <span class="btn-label-long">LOOP</span>
+                </button>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button id="blindModeBtn"
+                    class="flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 px-3 py-2 rounded-full text-xs font-semibold transition"
+                    onclick="toggleBlindMode()">
+                    <i class="fa-solid fa-eye-slash"></i>
+                    <span class="btn-label-long">TUTUP MATA</span>
+                </button>
+                <button id="tasmiBtn"
+                    class="flex items-center gap-1.5 bg-[#fbbf24] hover:bg-yellow-400 text-[#064e3b] px-3 py-2 rounded-full shadow-md transition-all font-bold text-xs"
+                    onclick="openTasmiModal()">
+                    <i class="fa-solid fa-microphone"></i>
+                    <span class="btn-label-long">SETOR HAFALAN</span>
+                </button>
+            </div>
+        </div>
+        <div id="tasmiStatus" class="hidden bg-red-50 border-t border-red-100 p-2.5 text-center">
+            <div class="flex items-center justify-center gap-3">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                </span>
+                <p class="text-red-700 font-bold text-xs uppercase tracking-widest">Mode Tasmi Aktif — Sistem Menyimak Bacaan Anda</p>
+            </div>
+            <div id="transcriptDisplay" class="mt-1 text-xs text-red-400 italic">Menunggu suara...</div>
+            <div class="mt-1.5 flex items-center justify-center gap-2">
+                <span id="tasmiProgress" class="text-xs text-red-600 font-bold"></span>
+                <button onclick="toggleTasmiMode()" class="text-xs bg-red-600 text-white px-3 py-1 rounded-full font-bold">Berhenti</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SETOR HAFALAN -->
+    <div id="tasmiModal" class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(0,0,0,0.5)">
+        <div class="bg-white w-full max-w-lg rounded-t-2xl p-5 shadow-2xl" style="max-height:85vh;overflow-y:auto">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-bold text-[#064e3b] flex items-center gap-2">
+                    <i class="fa-solid fa-microphone text-[#fbbf24]"></i> Setor Hafalan
+                </h2>
+                <button onclick="closeTasmiModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+            </div>
+
+            <p class="text-xs text-gray-500 mb-3">Pilih titik mulai setoran, atau klik ayat tertentu di mushaf terlebih dahulu.</p>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Dari Surah</label>
+                    <select id="tasmiSurahSel" class="w-full text-xs border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 font-semibold text-[#064e3b]" onchange="updateTasmiAyahOptions()">
+                        <option value="1">Al-Fatihah (1)</option>
+                        <option value="2">Al-Baqarah (2)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Dari Ayat</label>
+                    <select id="tasmiAyahSel" class="w-full text-xs border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 font-semibold text-[#064e3b]"></select>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Atau dari Halaman</label>
+                <select id="tasmiPageSel" class="w-full text-xs border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 font-semibold text-[#064e3b]" onchange="syncTasmiFromPage()"></select>
+            </div>
+
+            <div id="tasmiSelectedInfo" class="mb-4 bg-[#f0fdf4] border border-[#10b981]/30 rounded-xl px-4 py-2.5 text-xs text-[#065f46] font-semibold hidden">
+                <i class="fa-solid fa-circle-check mr-1 text-[#10b981]"></i>
+                <span id="tasmiSelectedText"></span>
+            </div>
+
+            <button onclick="startTasmiFromModal()"
+                class="w-full bg-[#fbbf24] hover:bg-yellow-400 text-[#064e3b] py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-md">
+                <i class="fa-solid fa-microphone"></i> Mulai Setor Hafalan
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL LOOP HAFALAN -->
+    <div id="loopModal" class="hidden fixed inset-0 z-50 flex items-end justify-center" style="background:rgba(0,0,0,0.5)">
+        <div class="bg-white w-full max-w-lg rounded-t-2xl p-5 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-bold text-[#064e3b] flex items-center gap-2">
+                    <i class="fa-solid fa-repeat text-[#065f46]"></i> Loop / Ulang Hafalan
+                </h2>
+                <button onclick="closeLoopModal()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Dari Ayat ke-</label>
+                    <select id="loopStartSel" class="w-full text-xs border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 font-semibold text-[#064e3b]"></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1">Sampai Ayat ke-</label>
+                    <select id="loopEndSel" class="w-full text-xs border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 font-semibold text-[#064e3b]"></select>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-xs font-semibold text-gray-500 mb-1">Ulang tiap ayat sebanyak</label>
+                <div class="flex items-center gap-3">
+                    <input type="range" id="loopMaxRange" min="1" max="10" value="3"
+                        class="flex-1" oninput="document.getElementById('loopMaxVal').textContent=this.value; loopMax=parseInt(this.value)">
+                    <span id="loopMaxVal" class="text-sm font-bold text-[#065f46] w-6 text-center">3</span>
+                    <span class="text-xs text-gray-400">kali</span>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="startLoop()"
+                    class="flex-1 bg-[#065f46] hover:bg-[#064e3b] text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-md">
+                    <i class="fa-solid fa-repeat"></i> Mulai Loop
+                </button>
+                <button onclick="stopLoop()"
+                    class="px-5 py-3 rounded-xl border border-gray-200 text-gray-500 text-sm font-semibold hover:bg-gray-50 transition">
+                    Stop
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow overflow-y-auto bg-[#f8fafc]" id="mainContainer">
+        <div id="loading" class="flex flex-col items-center justify-center h-full gap-4">
+            <div class="loader"></div>
+            <p class="text-[#065f46] font-bold text-sm animate-pulse tracking-widest">MEMUAT MUSHAF...</p>
+        </div>
+        <div id="digitalView" class="max-w-2xl mx-auto p-4 space-y-4 hidden pb-32"></div>
+        <div id="mushafView" class="mushaf-book-container hidden"></div>
+    </main>
+
+    <div class="page-indicator" id="pageIndicator">Halaman —</div>
+    <div class="toast" id="toastEl"></div>
+
+    <!-- PWA Install Banner -->
+    <div id="installBanner">
+        <div class="flex items-center gap-3">
+            <img src="/static/pwa/icon-192.png" alt="ELfashih" class="w-10 h-10 rounded-xl shadow">
+            <div>
+                <p class="font-bold text-sm">Pasang ELfashih ke HP</p>
+                <p class="text-xs text-green-300">Buka offline tanpa browser</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <button onclick="installPWA()"
+                class="bg-[#fbbf24] text-[#064e3b] px-4 py-2 rounded-full text-xs font-bold hover:bg-yellow-300 transition">
+                Pasang
+            </button>
+            <button onclick="dismissInstall()" class="text-gray-400 text-xs px-2 py-2">Nanti</button>
+        </div>
+    </div>
+
+    <!--
+        FIX SCROLL BUG: tabindex="-1" + aria-hidden mencegah browser
+        melakukan auto-scroll ke elemen <audio> saat .play() dipanggil.
+        Tanpa ini, browser menganggap audio mendapat "focus" dan
+        scroll halaman ke posisi elemen tersebut (biasanya y=0 karena
+        audio ada di luar mainContainer).
+    -->
+    <audio id="quranAudio" tabindex="-1" aria-hidden="true"></audio>
+
+    <script>
+    // =============================================
+    // DYNAMIC SCALE
+    // =============================================
+    function updateMushafScale() {
+        const contentW = Math.min(window.innerWidth * 0.92, 640);
+        document.documentElement.style.setProperty('--mf-content-w', contentW + 'px');
+        scaleMushafLines();
+    }
+
+    function scaleMushafLines() {
+        document.querySelectorAll('.mushaf-page-card').forEach(card => {
+            const body = card.querySelector('.mushaf-body');
+            if (!body) return;
+            const bodyW = body.clientWidth;
+            card.querySelectorAll('quran-madina-html-line').forEach(line => {
+                line.style.transform = '';
+                const naturalW = line.scrollWidth;
+                if (naturalW > bodyW && naturalW > 0) {
+                    line.style.transform = `scaleX(${bodyW / naturalW})`;
+                    line.style.transformOrigin = 'right top';
+                }
+            });
+        });
+    }
+
+    window.addEventListener('resize', updateMushafScale);
+
+    // =============================================
+    // STATE
+    // =============================================
+    let ayahsData        = [];
+    let viewMode         = 'mushaf';
+    let isBlindMode      = false;
+    let isTasmiMode      = false;
+    let isPlayingAll     = false;
+    let currentPlayIndex = 0;
+    const audioPlayer    = document.getElementById('quranAudio');
+    let recognition      = null;
+    let ayahElementMap   = {};
+    // Loop hafalan
+    let isLoopMode       = false;
+    let loopStart        = 0;
+    let loopEnd          = 0;
+    let loopCount        = 0;
+    let loopMax          = 3; // ulang 3x per ayat default
+    // Tasmi start index
+    let tasmiStartIndex  = 0;
+
+    // =============================================
+    // BOOT
+    // =============================================
+    document.addEventListener('DOMContentLoaded', () => {
+        updateMushafScale();
+        loadJuzOne();
+        initAudioEvents();
+        initSpeechRecognition();
+        initScrollPageIndicator();
+        registerServiceWorker();
+        initPWAInstall();
+    });
+
+    // =============================================
+    // PWA
+    // =============================================
+    function registerServiceWorker() {
+        if (!('serviceWorker' in navigator)) return;
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then(r  => console.log('[SW] OK:', r.scope))
+            .catch(e => console.warn('[SW] Gagal:', e));
+    }
+
+    let deferredInstallPrompt = null;
+    function initPWAInstall() {
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            if (!localStorage.getItem('pwa-dismissed')) {
+                document.getElementById('installBanner').classList.add('visible');
+            }
+        });
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('installBanner').classList.remove('visible');
+            deferredInstallPrompt = null;
+        });
+    }
+    function installPWA() {
+        if (!deferredInstallPrompt) return;
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then(c => {
+            if (c.outcome === 'accepted') document.getElementById('installBanner').classList.remove('visible');
+            deferredInstallPrompt = null;
+        });
+    }
+    function dismissInstall() {
+        document.getElementById('installBanner').classList.remove('visible');
+        localStorage.setItem('pwa-dismissed', '1');
+    }
+
+    // =============================================
+    // LOAD DATA
+    // =============================================
+    async function loadJuzOne() {
+        try {
+            const res  = await fetch('https://api.alquran.cloud/v1/juz/1/quran-uthmani');
+            const data = await res.json();
+            ayahsData  = data.data.ayahs;
+            renderContent();
+            document.getElementById('loading').classList.add('hidden');
+        } catch (err) {
+            document.getElementById('loading').innerHTML = `
+                <div class="text-red-500 text-center p-8">
+                    <i class="fa-solid fa-wifi text-4xl mb-4 block"></i>
+                    <p class="font-bold">Gagal memuat data Qur'an</p>
+                    <p class="text-sm mt-1 text-gray-500">Periksa koneksi internet Anda</p>
+                    <button onclick="location.reload()" class="mt-4 bg-[#065f46] text-white px-6 py-2 rounded-full text-sm font-semibold">Coba Lagi</button>
+                </div>`;
+        }
+    }
+
+    function getLocalAudioPath(ayah) {
+        const s = String(ayah.surah.number).padStart(3, '0');
+        const a = String(ayah.numberInSurah).padStart(3, '0');
+        return `/audio/${s}/${s}${a}.mp3`;
+    }
+
+    // =============================================
+    // VIEW MODE
+    // =============================================
+    function setViewMode(mode) {
+        viewMode = mode;
+        document.getElementById('viewDigitalBtn').classList.toggle('bg-[#065f46]', mode === 'digital');
+        document.getElementById('viewDigitalBtn').classList.toggle('text-white',    mode === 'digital');
+        document.getElementById('viewDigitalBtn').classList.toggle('shadow',        mode === 'digital');
+        document.getElementById('viewDigitalBtn').classList.toggle('text-gray-400', mode !== 'digital');
+        document.getElementById('viewMushafBtn').classList.toggle('bg-[#065f46]',  mode === 'mushaf');
+        document.getElementById('viewMushafBtn').classList.toggle('text-white',     mode === 'mushaf');
+        document.getElementById('viewMushafBtn').classList.toggle('shadow',         mode === 'mushaf');
+        document.getElementById('viewMushafBtn').classList.toggle('text-gray-400',  mode !== 'mushaf');
+        renderContent();
+    }
+
+    function renderContent() {
+        const dig = document.getElementById('digitalView');
+        const mus = document.getElementById('mushafView');
+        if (viewMode === 'digital') {
+            if (!dig.dataset.rendered) { renderDigital(); dig.dataset.rendered = '1'; }
+            dig.classList.remove('hidden'); mus.classList.add('hidden');
+        } else {
+            if (!mus.dataset.rendered) { renderMushaf(); mus.dataset.rendered = '1'; }
+            mus.classList.remove('hidden'); dig.classList.add('hidden');
+        }
+    }
+
+    // =============================================
+    // DIGITAL VIEW
+    // =============================================
+    function renderDigital() {
+        const container = document.getElementById('digitalView');
+        container.innerHTML = '';
+        ayahsData.forEach((ayah, idx) => {
+            const card = document.createElement('div');
+            card.className = 'digital-ayah-card';
+            let wordsHtml = ayah.text.split(' ')
+                .map(w => `<span class="digital-word" data-idx="${idx}" onclick="playAyah(${idx})">${w}</span>`)
+                .join(' ');
+            card.innerHTML = `
+                <div class="flex justify-between items-center mb-3 text-xs text-gray-400 font-semibold font-[Poppins]">
+                    <span class="bg-[#f0fdf4] text-[#065f46] px-3 py-1 rounded-full border border-[#10b981]/30">${ayah.surah.name} : ${ayah.numberInSurah}</span>
+                    <span class="text-gray-300">Hal. ${ayah.page}</span>
+                </div>
+                <div class="digital-ayah-text" dir="rtl">
+                    ${wordsHtml}
+                    <span class="ayah-marker" onclick="playAyah(${idx})">${toArabicNum(ayah.numberInSurah)}</span>
+                </div>`;
+            // Klik panjang / klik kanan = set sebagai titik mulai tasmi
+            card.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                setTasmiStartFromClick(idx);
+                showToast(`Titik mulai setoran: ${ayah.surah.name} ${ayah.numberInSurah}`);
+            });
+            container.appendChild(card);
+        });
+    }
+
+    // =============================================
+    // MUSHAF VIEW
+    // =============================================
+    function renderMushaf() {
+        const container = document.getElementById('mushafView');
+        container.innerHTML = '';
+        ayahElementMap = {};
+
+        const pages = {};
+        ayahsData.forEach((ayah, idx) => {
+            if (!pages[ayah.page]) pages[ayah.page] = [];
+            pages[ayah.page].push({ ...ayah, gIdx: idx });
+        });
+
+        Object.entries(pages).forEach(([page, ayahs]) => {
+            const pageNum = parseInt(page);
+            const specialClass = pageNum === 1 ? ' special-fatihah' : pageNum === 2 ? ' special-baqarah' : '';
+            const card = document.createElement('div');
+            card.className = `mushaf-page-card${specialClass}`;
+            card.dataset.page = page;
+
+            const firstSurah = ayahs[0].surah;
+            const lastSurah  = ayahs[ayahs.length - 1].surah;
+            const surahLabel = firstSurah.number === lastSurah.number
+                ? firstSurah.name : `${firstSurah.name} – ${lastSurah.name}`;
+
+            const header = document.createElement('div');
+            header.className = 'mushaf-header';
+            header.innerHTML = `<span>${surahLabel}</span><span>Halaman ${page}</span><span>Juz 1</span>`;
+            card.appendChild(header);
+
+            const body = document.createElement('div');
+            body.className = 'mushaf-body';
+
+            groupBySurah(ayahs).forEach(seg => {
+                const surahNum = seg[0].surah.number;
+                const startAya = seg[0].numberInSurah;
+                const endAya   = seg[seg.length - 1].numberInSurah;
+
+                const comp = document.createElement('quran-madina-html');
+                comp.setAttribute('sura', surahNum);
+                comp.setAttribute('aya', startAya === 1
+                    ? (endAya === 1 ? '1' : `1-${endAya}`)
+                    : (startAya === endAya ? `${startAya}` : `${startAya}-${endAya}`));
+
+                seg.forEach(ayah => {
+                    ayahElementMap[ayah.gIdx] = {
+                        comp, surahNum,
+                        ayahNum: ayah.numberInSurah,
+                        className: `quran-madina-html-${String(surahNum).padStart(3,'0')}-${String(ayah.numberInSurah).padStart(3,'0')}`
+                    };
+                });
+
+                comp.addEventListener('click', (e) => {
+                    const part = e.target.closest('.quran-madina-html-part');
+                    if (!part) return;
+                    const gIdx = getGIdxFromPart(part);
+                    if (gIdx !== null) playAyah(gIdx);
+                });
+
+                comp.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    const part = e.target.closest('.quran-madina-html-part');
+                    if (!part) return;
+                    const gIdx = getGIdxFromPart(part);
+                    if (gIdx !== null) {
+                        setTasmiStartFromClick(gIdx);
+                        const a = ayahsData[gIdx];
+                        showToast(`Titik mulai setoran: ${a.surah.name} ${a.numberInSurah}`);
+                    }
+                });
+
+                body.appendChild(comp);
+            });
+
+            card.appendChild(body);
+
+            const footer = document.createElement('div');
+            footer.className = 'mushaf-footer';
+            footer.textContent = 'بِسْمِ ٱللَّهِ';
+            card.appendChild(footer);
+
+            container.appendChild(card);
+        });
+
+        const musContainer = document.getElementById('mushafView');
+        const observer = new MutationObserver(() => {
+            clearTimeout(observer._t);
+            observer._t = setTimeout(() => {
+                scaleMushafLines();
+                // Simpan referensi langsung ke elemen span tiap ayat setelah web component render
+                Object.entries(ayahElementMap).forEach(([idx, info]) => {
+                    const span = document.querySelector(`.${info.className}`);
+                    if (span) info.spanEl = span;
+                });
+            }, 120);
+        });
+        observer.observe(musContainer, { childList: true, subtree: true });
+        setTimeout(scaleMushafLines, 1000);
+        setTimeout(scaleMushafLines, 2500);
+    }
+
+    function groupBySurah(ayahs) {
+        const groups = [];
+        let current = null;
+        ayahs.forEach(ayah => {
+            if (!current || current[0].surah.number !== ayah.surah.number) {
+                current = [ayah]; groups.push(current);
+            } else { current.push(ayah); }
+        });
+        return groups;
+    }
+
+    function getGIdxFromPart(el) {
+        for (const cls of el.classList) {
+            const m = cls.match(/^quran-madina-html-(\d{3})-(\d{3})$/);
+            if (m) {
+                const sura = parseInt(m[1]), aya = parseInt(m[2]);
+                for (const [idx, info] of Object.entries(ayahElementMap)) {
+                    if (info.surahNum === sura && info.ayahNum === aya) return parseInt(idx);
+                }
+            }
+        }
+        return null;
+    }
+
+    // =============================================
+    // AUDIO
+    // =============================================
+    function playAyah(index, continuous = false) {
+        if (isTasmiMode) return;
+        if (!continuous) isPlayingAll = false;
+
+        currentPlayIndex = index;
+        highlightWords(index);
+
+        // -------------------------------------------------------
+        // FIX SCROLL BUG:
+        // Simpan posisi scroll sebelum mengganti src audio.
+        // Browser kadang melakukan scroll ke elemen <audio> saat
+        // src berubah (terutama iOS/Android). Kita kembalikan
+        // posisi scroll jika berubah tidak terduga.
+        // tabindex="-1" pada elemen audio juga membantu.
+        // -------------------------------------------------------
+        const mainEl       = document.getElementById('mainContainer');
+        const scrollBefore = mainEl.scrollTop;
+
+        audioPlayer.src = getLocalAudioPath(ayahsData[index]);
+
+        requestAnimationFrame(() => {
+            // Kembalikan scroll jika browser me-reset ke 0
+            if (mainEl.scrollTop === 0 && scrollBefore > 0) {
+                mainEl.scrollTop = scrollBefore;
+            }
+        });
+
+        audioPlayer.play().catch(() => { if (continuous) skipToNext(); });
+
+        // Scroll ke ayat aktif — dipanggil dengan delay di dalam scrollToAyah
+        scrollToAyah(index);
+    }
+
+    // -------------------------------------------------------
+    // FIX SCROLL BUG — Penyebab utama "layar kembali ke atas":
+    //
+    // Kode lama: `const y = el.offsetTop - 120;`
+    // `el.offsetTop` mengembalikan posisi relatif ke offsetParent
+    // (body/document), bukan relatif ke mainContainer.
+    // Saat kita lakukan `mainContainer.scrollTo({ top: y })`,
+    // nilainya salah — jika el.offsetTop < 120, hasilnya negatif
+    // dan scroll ke atas (top:0).
+    //
+    // FIX: Gunakan getBoundingClientRect() untuk menghitung
+    // delta posisi relatif terhadap mainContainer saat ini,
+    // lalu gunakan scrollBy() bukan scrollTo().
+    // -------------------------------------------------------
+    function scrollToAyah(index) {
+        function doScroll() {
+            let el = null;
+            if (viewMode === 'digital') {
+                el = document.querySelectorAll('.digital-ayah-card')[index] || null;
+            } else {
+                const info = ayahElementMap[index];
+                if (info) {
+                    // Gunakan span langsung jika sudah tersimpan, fallback ke querySelector
+                    el = info.spanEl
+                        || document.querySelector(`.${info.className}`)
+                        || info.comp
+                        || null;
+                }
+            }
+            if (!el) return false;
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            return true;
+        }
+
+        setTimeout(() => {
+            if (!doScroll()) setTimeout(doScroll, 600);
+        }, 80);
+    }
+
+    function togglePlayAll() {
+        isPlayingAll = !isPlayingAll;
+        const btn = document.getElementById('playAllBtn');
+        if (isPlayingAll) {
+            btn.innerHTML = `<i class="fa-solid fa-pause"></i><span class="btn-label-long"> JEDA</span>`;
+            btn.classList.replace('bg-[#065f46]', 'bg-orange-500');
+            playAyah(currentPlayIndex, true);
+        } else {
+            btn.innerHTML = `<i class="fa-solid fa-play"></i><span class="btn-label-long"> PUTAR SEMUA</span>`;
+            btn.classList.replace('bg-orange-500', 'bg-[#065f46]');
+            audioPlayer.pause();
+        }
+    }
+
+    function initAudioEvents() {
+        audioPlayer.addEventListener('ended', () => {
+            if (isLoopMode) {
+                loopCount++;
+                if (loopCount < loopMax) {
+                    // Ulang ayat yang sama
+                    playAyah(currentPlayIndex, true);
+                } else {
+                    // Lanjut ke ayat berikutnya dalam range loop
+                    loopCount = 0;
+                    if (currentPlayIndex < loopEnd) {
+                        playAyah(currentPlayIndex + 1, true);
+                    } else {
+                        // Selesai satu putaran — mulai lagi dari awal range
+                        currentPlayIndex = loopStart;
+                        playAyah(currentPlayIndex, true);
+                    }
+                }
+            } else if (isPlayingAll) {
+                skipToNext();
+            }
+        });
+    }
+
+    function skipToNext() {
+        currentPlayIndex++;
+        if (currentPlayIndex < ayahsData.length) playAyah(currentPlayIndex, true);
+        else stopAudio();
+    }
+
+    function stopAudio() {
+        audioPlayer.pause();
+        isPlayingAll = false;
+        document.getElementById('playAllBtn').innerHTML = `<i class="fa-solid fa-play"></i><span class="btn-label-long"> PUTAR SEMUA</span>`;
+        document.getElementById('playAllBtn').classList.replace('bg-orange-500', 'bg-[#065f46]');
+        removeHighlight();
+    }
+
+    // =============================================
+    // HIGHLIGHT
+    // =============================================
+    function highlightWords(index) {
+        removeHighlight();
+        document.querySelectorAll(`.digital-word[data-idx="${index}"]`).forEach(el => el.classList.add('char-active'));
+
+        // Tandai card digital yang aktif
+        const cards = document.querySelectorAll('.digital-ayah-card');
+        if (cards[index]) cards[index].classList.add('card-active');
+
+        const info = ayahElementMap[index];
+        if (info) {
+            setTimeout(() => {
+                document.querySelectorAll(`.${info.className}`).forEach(p => p.classList.add('char-active'));
+            }, 100);
+        }
+    }
+
+    function removeHighlight() {
+        document.querySelectorAll('.char-active').forEach(el => el.classList.remove('char-active', 'tasmi-error'));
+        document.querySelectorAll('.card-active').forEach(el => el.classList.remove('card-active'));
+    }
+
+    // =============================================
+    // BLIND MODE
+    // =============================================
+    function toggleBlindMode() {
+        isBlindMode = !isBlindMode;
+        document.getElementById('mainContainer').classList.toggle('blind-mode', isBlindMode);
+        document.getElementById('blindModeBtn').innerHTML = isBlindMode
+            ? `<i class="fa-solid fa-eye"></i><span class="btn-label-long"> BUKA MATA</span>`
+            : `<i class="fa-solid fa-eye-slash"></i><span class="btn-label-long"> TUTUP MATA</span>`;
+    }
+
+    // =============================================
+    // MODAL SETOR HAFALAN
+    // =============================================
+    function openTasmiModal() {
+        if (isTasmiMode) { toggleTasmiMode(); return; }
+        if (!ayahsData.length) return;
+
+        // Isi opsi halaman
+        const pages = [...new Set(ayahsData.map(a => a.page))].sort((a,b)=>a-b);
+        const pageSel = document.getElementById('tasmiPageSel');
+        pageSel.innerHTML = pages.map(p => `<option value="${p}">Halaman ${p}</option>`).join('');
+
+        // Isi opsi surah & ayat
+        updateTasmiAyahOptions();
+
+        // Tampilkan info jika ada titik mulai yang sudah dipilih via klik ayat
+        updateTasmiSelectedInfo();
+
+        document.getElementById('tasmiModal').classList.remove('hidden');
+    }
+
+    function closeTasmiModal() {
+        document.getElementById('tasmiModal').classList.add('hidden');
+    }
+
+    function updateTasmiAyahOptions() {
+        const surahNum = parseInt(document.getElementById('tasmiSurahSel').value);
+        const ayahsInSurah = ayahsData.filter(a => a.surah.number === surahNum);
+        const sel = document.getElementById('tasmiAyahSel');
+        sel.innerHTML = ayahsInSurah.map(a =>
+            `<option value="${ayahsData.indexOf(a)}">Ayat ${a.numberInSurah}</option>`
+        ).join('');
+        syncTasmiFromSurahAyah();
+    }
+
+    function syncTasmiFromSurahAyah() {
+        const idx = parseInt(document.getElementById('tasmiAyahSel').value);
+        if (!isNaN(idx)) { tasmiStartIndex = idx; updateTasmiSelectedInfo(); }
+    }
+
+    function syncTasmiFromPage() {
+        const page = parseInt(document.getElementById('tasmiPageSel').value);
+        const idx = ayahsData.findIndex(a => a.page === page);
+        if (idx >= 0) {
+            tasmiStartIndex = idx;
+            // Sinkronkan dropdown surah & ayat
+            const a = ayahsData[idx];
+            document.getElementById('tasmiSurahSel').value = a.surah.number;
+            updateTasmiAyahOptions();
+            document.getElementById('tasmiAyahSel').value = idx;
+            updateTasmiSelectedInfo();
+        }
+    }
+
+    function updateTasmiSelectedInfo() {
+        const box  = document.getElementById('tasmiSelectedInfo');
+        const text = document.getElementById('tasmiSelectedText');
+        if (tasmiStartIndex >= 0 && ayahsData[tasmiStartIndex]) {
+            const a = ayahsData[tasmiStartIndex];
+            text.textContent = `Mulai dari ${a.surah.name} Ayat ${a.numberInSurah} (Hal. ${a.page})`;
+            box.classList.remove('hidden');
+        }
+    }
+
+    function startTasmiFromModal() {
+        // Ambil nilai dari dropdown jika user tidak klik ayat langsung
+        const selIdx = parseInt(document.getElementById('tasmiAyahSel').value);
+        if (!isNaN(selIdx)) tasmiStartIndex = selIdx;
+        closeTasmiModal();
+        activateTasmi();
+    }
+
+    // Dipanggil saat user klik ayat di mushaf/digital dalam mode pilih titik tasmi
+    function setTasmiStartFromClick(gIdx) {
+        tasmiStartIndex = gIdx;
+        const a = ayahsData[gIdx];
+        // Sinkronkan ke modal kalau terbuka
+        if (!document.getElementById('tasmiModal').classList.contains('hidden')) {
+            document.getElementById('tasmiSurahSel').value = a.surah.number;
+            updateTasmiAyahOptions();
+            document.getElementById('tasmiAyahSel').value = gIdx;
+            updateTasmiSelectedInfo();
+        }
+    }
+
+    // =============================================
+    // TASMI CORE
+    // =============================================
+    function activateTasmi() {
+        isTasmiMode = true;
+        const btn = document.getElementById('tasmiBtn');
+        document.getElementById('tasmiStatus').classList.remove('hidden');
+        btn.innerHTML = `<i class="fa-solid fa-circle-stop"></i><span class="btn-label-long"> BERHENTI</span>`;
+        btn.classList.replace('bg-[#fbbf24]', 'bg-red-600');
+        btn.classList.replace('text-[#064e3b]', 'text-white');
+        stopAudio();
+        if (recognition) recognition.start();
+        currentPlayIndex = tasmiStartIndex;
+        highlightWords(currentPlayIndex);
+        scrollToAyah(currentPlayIndex);
+        updateTasmiProgressUI();
+    }
+
+    function toggleTasmiMode() {
+        if (isTasmiMode) {
+            // Stop tasmi
+            isTasmiMode = false;
+            const btn = document.getElementById('tasmiBtn');
+            document.getElementById('tasmiStatus').classList.add('hidden');
+            btn.innerHTML = `<i class="fa-solid fa-microphone"></i><span class="btn-label-long"> SETOR HAFALAN</span>`;
+            btn.classList.replace('bg-red-600', 'bg-[#fbbf24]');
+            btn.classList.replace('text-white', 'text-[#064e3b]');
+            if (recognition) recognition.stop();
+            removeHighlight();
+        } else {
+            openTasmiModal();
+        }
+    }
+
+    function updateTasmiProgressUI() {
+        const el = document.getElementById('tasmiProgress');
+        if (!el || !ayahsData.length) return;
+        const total = ayahsData.length - tasmiStartIndex;
+        const done  = currentPlayIndex - tasmiStartIndex;
+        el.textContent = `Ayat ${done + 1} / ${total}`;
+    }
+
+    function initSpeechRecognition() {
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!window.SpeechRecognition) return;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ar-SA';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.onresult = (e) => {
+            const last = e.results[e.results.length - 1];
+            document.getElementById('transcriptDisplay').innerText = `Menyimak: "${last[0].transcript}"`;
+            if (last.isFinal) checkTasmi(last[0].transcript);
+        };
+        recognition.onend = () => { if (isTasmiMode) recognition.start(); };
+    }
+
+    function checkTasmi(spoken) {
+        const target      = ayahsData[currentPlayIndex].text.replace(/[\u064B-\u0652]/g, '');
+        const input       = spoken.replace(/[\u064B-\u0652]/g, '');
+        const targetWords = target.split(' ');
+        const match       = targetWords.filter(w => input.includes(w)).length;
+        if (match / targetWords.length > 0.3) {
+            currentPlayIndex++;
+            if (currentPlayIndex < ayahsData.length) {
+                highlightWords(currentPlayIndex);
+                scrollToAyah(currentPlayIndex);
+                updateTasmiProgressUI();
+            } else {
+                toggleTasmiMode();
+            }
+        } else { triggerError(); }
+    }
+
+    function triggerError() {
+        document.querySelectorAll('.char-active').forEach(el => el.classList.add('tasmi-error'));
+        try {
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            osc.connect(ctx.destination);
+            osc.frequency.value = 220;
+            osc.start(); osc.stop(ctx.currentTime + 0.25);
+        } catch(e) {}
+        setTimeout(() => document.querySelectorAll('.tasmi-error').forEach(el => el.classList.remove('tasmi-error')), 1500);
+    }
+
+    // =============================================
+    // MODAL LOOP
+    // =============================================
+    function openLoopModal() {
+        if (!ayahsData.length) return;
+        // Isi dropdown loop dengan label surah:ayat
+        const startSel = document.getElementById('loopStartSel');
+        const endSel   = document.getElementById('loopEndSel');
+        const opts = ayahsData.map((a, i) =>
+            `<option value="${i}">${a.surah.name} ${a.numberInSurah} (Hal.${a.page})</option>`
+        ).join('');
+        startSel.innerHTML = opts;
+        endSel.innerHTML   = opts;
+        // Default: ayat aktif sampai +4
+        startSel.value = currentPlayIndex;
+        endSel.value   = Math.min(currentPlayIndex + 4, ayahsData.length - 1);
+        document.getElementById('loopModal').classList.remove('hidden');
+    }
+
+    function closeLoopModal() {
+        document.getElementById('loopModal').classList.add('hidden');
+    }
+
+    function startLoop() {
+        loopStart = parseInt(document.getElementById('loopStartSel').value);
+        loopEnd   = parseInt(document.getElementById('loopEndSel').value);
+        loopMax   = parseInt(document.getElementById('loopMaxRange').value);
+        if (loopStart > loopEnd) { [loopStart, loopEnd] = [loopEnd, loopStart]; }
+        loopCount   = 0;
+        isLoopMode  = true;
+        isPlayingAll = false;
+        closeLoopModal();
+        // Tandai tombol loop aktif
+        document.getElementById('loopBtn').classList.replace('bg-gray-50','bg-[#065f46]');
+        document.getElementById('loopBtn').classList.replace('text-gray-500','text-white');
+        document.getElementById('loopBtn').classList.replace('border-gray-200','border-[#065f46]');
+        currentPlayIndex = loopStart;
+        playAyah(currentPlayIndex, true);
+    }
+
+    function stopLoop() {
+        isLoopMode = false;
+        loopCount  = 0;
+        closeLoopModal();
+        stopAudio();
+        const btn = document.getElementById('loopBtn');
+        btn.className = 'flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-500 px-3 py-2 rounded-full text-xs font-semibold transition';
+    }
+
+    // =============================================
+    // TOAST
+    // =============================================
+    let toastTimer = null;
+    function showToast(msg) {
+        const el = document.getElementById('toastEl');
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+    }
+
+    // =============================================
+    // PAGE INDICATOR
+    // =============================================
+    function initScrollPageIndicator() {
+        const container = document.getElementById('mainContainer');
+        const indicator = document.getElementById('pageIndicator');
+        let hideTimer;
+        container.addEventListener('scroll', () => {
+            if (viewMode !== 'mushaf') return;
+            let visiblePage = null;
+            document.querySelectorAll('.mushaf-page-card').forEach(p => {
+                const rect = p.getBoundingClientRect();
+                if (rect.top < window.innerHeight * 0.6 && rect.bottom > 0) visiblePage = p.dataset.page;
+            });
+            if (visiblePage) {
+                indicator.textContent = `Halaman ${visiblePage}`;
+                indicator.classList.add('visible');
+                clearTimeout(hideTimer);
+                hideTimer = setTimeout(() => indicator.classList.remove('visible'), 1500);
+            }
+        });
+    }
+
+    // =============================================
+    // UTILS
+    // =============================================
+    function toArabicNum(n) {
+        return n.toString().replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+    }
+    </script>
+</body>
+</html>
